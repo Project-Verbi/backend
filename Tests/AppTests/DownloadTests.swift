@@ -53,7 +53,7 @@ struct DownloadTests {
                 """)
             ) { response in
                 #expect(response.status == .ok)
-                let data = Data(buffer: response.body)
+                let data = Data(response.body.readableBytesView)
                 let responseData = try JSONDecoder().decode(TrackDownloadResponse.self, from: data)
                 #expect(responseData.success == true)
                 #expect(responseData.isNewDownload == true)
@@ -70,7 +70,7 @@ struct DownloadTests {
                 """)
             ) { response in
                 #expect(response.status == .ok)
-                let data = Data(buffer: response.body)
+                let data = Data(response.body.readableBytesView)
                 let responseData = try JSONDecoder().decode(TrackDownloadResponse.self, from: data)
                 #expect(responseData.success == true)
                 #expect(responseData.isNewDownload == false)
@@ -80,7 +80,7 @@ struct DownloadTests {
             // Test stats endpoint
             try await client.execute(uri: "/download-stats", method: .get) { response in
                 #expect(response.status == .ok)
-                let data = Data(buffer: response.body)
+                let data = Data(response.body.readableBytesView)
                 let responseData = try JSONDecoder().decode(DownloadStatsResponse.self, from: data)
                 #expect(responseData.totalUniqueDownloads == 1)
             }
