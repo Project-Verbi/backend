@@ -43,7 +43,7 @@ struct DownloadTests {
         let app = try await buildApplication(args)
         
         try await app.test(.router) { client in
-            // Test track download endpoint
+            // Test track download endpoint - should return 200 OK for success
             try await client.execute(
                 uri: "/track-download",
                 method: .post,
@@ -53,14 +53,9 @@ struct DownloadTests {
                 """)
             ) { response in
                 #expect(response.status == .ok)
-                let data = Data(response.body.readableBytesView)
-                let responseData = try JSONDecoder().decode(TrackDownloadResponse.self, from: data)
-                #expect(responseData.success == true)
-                #expect(responseData.isNewDownload == true)
-                #expect(responseData.totalUniqueDownloads == 1)
             }
             
-            // Test duplicate download
+            // Test duplicate download - should still return 200 OK (success even if already exists)
             try await client.execute(
                 uri: "/track-download",
                 method: .post,
@@ -70,19 +65,36 @@ struct DownloadTests {
                 """)
             ) { response in
                 #expect(response.status == .ok)
-                let data = Data(response.body.readableBytesView)
-                let responseData = try JSONDecoder().decode(TrackDownloadResponse.self, from: data)
-                #expect(responseData.success == true)
-                #expect(responseData.isNewDownload == false)
-                #expect(responseData.totalUniqueDownloads == 1)
             }
             
-            // Test stats endpoint
+            // Test invalid request - empty identifier should return 400 Bad Request
+            try await client.execute(
+                uri: "/track-download",
+                method: .post,
+                headers: [.contentType: "application/json"],
+                body: ByteBuffer(string: """
+                {"identifier": ""}
+                """)
+            ) { response in
+                #expect(response.status == .badRequest)
+            }
+            
+            // Test invalid JSON should return 400 Bad Request
+            try await client.execute(
+                uri: "/track-download",
+                method: .post,
+                headers: [.contentType: "application/json"],
+                body: ByteBuffer(string: "invalid json")
+            ) { response in
+                #expect(response.status == .badRequest)
+            }
+            
+            // Test stats endpoint - should return 200 OK with JSON containing count
             try await client.execute(uri: "/download-stats", method: .get) { response in
                 #expect(response.status == .ok)
                 let data = Data(response.body.readableBytesView)
-                let responseData = try JSONDecoder().decode(DownloadStatsResponse.self, from: data)
-                #expect(responseData.totalUniqueDownloads == 1)
+                let responseData = try JSONDecoder().decode([String: Int].self, from: data)
+                #expect(responseData["totalUniqueDownloads"] == 1)
             }
         }
     }
