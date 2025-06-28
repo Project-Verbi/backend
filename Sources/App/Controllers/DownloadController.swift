@@ -52,7 +52,7 @@ public struct DownloadController: Sendable {
             let totalCount = try await databaseService.getUniqueDownloadCount()
             let response = ["totalUniqueDownloads": totalCount]
             let jsonData = try JSONEncoder().encode(response)
-            return Response(status: .ok, headers: [.contentType: "application/json"], body: ResponseBody(byteBuffer: ByteBuffer(data: jsonData)))
+            return Response(status: .ok, headers: [.contentType: "application/json"], body: ResponseBody(byteBuffer: ByteBuffer(bytes: jsonData)))
         } catch {
             return Response(status: .internalServerError)
         }
