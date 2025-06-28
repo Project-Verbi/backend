@@ -1,5 +1,6 @@
 import Hummingbird
 import Logging
+@preconcurrency import SQLite
 
 /// Application arguments protocol. We use a protocol so we can call
 /// `buildApplication` inside Tests as well as in the App executable. 
@@ -9,6 +10,7 @@ public protocol AppArguments {
     var hostname: String { get }
     var port: Int { get }
     var logLevel: Logger.Level? { get }
+    var databasePath: String? { get }
 }
 
 // Request context used by application
@@ -26,7 +28,16 @@ public func buildApplication(_ arguments: some AppArguments) async throws -> som
             .info
         return logger
     }()
-    let router = try buildRouter()
+    
+    // Initialize database service
+    let databaseService: DatabaseService
+    if let databasePath = arguments.databasePath {
+        databaseService = try await DatabaseService(path: databasePath, logger: logger)
+    } else {
+        databaseService = try await DatabaseService(logger: logger)
+    }
+    
+    let router = try await buildRouter(databaseService: databaseService)
     let app = Application(
         router: router,
         configuration: .init(
@@ -39,16 +50,25 @@ public func buildApplication(_ arguments: some AppArguments) async throws -> som
 }
 
 /// Build router
-func buildRouter() throws -> Router<AppRequestContext> {
+func buildRouter(databaseService: DatabaseService) async throws -> Router<AppRequestContext> {
     let router = Router(context: AppRequestContext.self)
     // Add middleware
     router.addMiddleware {
         // logging middleware
         LogRequestsMiddleware(.info)
     }
+    
+    // Initialize controllers
+    let downloadController = DownloadController(databaseService: databaseService)
+    
     // Add default endpoint
     router.get("/") { _,_ in
         return "Hello!"
     }
+    
+    // Add download tracking endpoints
+    router.post("/track-download", use: downloadController.trackDownload)
+    router.get("/download-stats", use: downloadController.getDownloadStats)
+    
     return router
 }

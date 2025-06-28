@@ -13,6 +13,9 @@ struct AppCommand: AsyncParsableCommand, AppArguments {
     @Option(name: .shortAndLong)
     var logLevel: Logger.Level?
 
+    @Option(name: .shortAndLong)
+    var databasePath: String?
+
     func run() async throws {
         let app = try await buildApplication(self)
         try await app.runService()
