@@ -1,34 +1,44 @@
-// swift-tools-version:6.0
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
+// swift-tools-version:5.10
 import PackageDescription
 
 let package = Package(
     name: "backend",
-    platforms: [.macOS(.v14), .iOS(.v17), .tvOS(.v17)],
-    products: [
-        .executable(name: "App", targets: ["App"]),
+    platforms: [
+       .macOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.15.3"),
+        // 💧 A server-side Swift web framework.
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.115.0"),
+        // 🗄 An ORM for SQL and NoSQL databases.
+        .package(url: "https://github.com/vapor/fluent.git", from: "4.9.0"),
+        // 🪶 Fluent driver for SQLite.
+        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.6.0"),
+        // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
     ],
     targets: [
-        .executableTarget(name: "App",
+        .executableTarget(
+            name: "backend",
             dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Hummingbird", package: "hummingbird"),
-                .product(name: "SQLite", package: "SQLite.swift"),
+                .product(name: "Fluent", package: "fluent"),
+                .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
+                .product(name: "Vapor", package: "vapor"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
             ],
-            path: "Sources/App"
+            swiftSettings: swiftSettings
         ),
-        .testTarget(name: "AppTests",
+        .testTarget(
+            name: "backendTests",
             dependencies: [
-                .byName(name: "App"),
-                .product(name: "HummingbirdTesting", package: "hummingbird")
+                .target(name: "backend"),
+                .product(name: "VaporTesting", package: "vapor"),
             ],
-            path: "Tests/AppTests"
+            swiftSettings: swiftSettings
         )
     ]
 )
+
+var swiftSettings: [SwiftSetting] { [
+    .enableUpcomingFeature("ExistentialAny"),
+] }
