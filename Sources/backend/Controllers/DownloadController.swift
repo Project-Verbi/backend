@@ -4,7 +4,7 @@ import Vapor
 struct DownloadController {
 
     @Sendable
-    func track(req: Request) async throws -> Response {
+    func track(req: Request) async throws -> HTTPResponseStatus {
         let downloadDTO = try req.content.decode(DownloadDTO.self)
         
         guard let id = downloadDTO.id else {
@@ -16,10 +16,11 @@ struct DownloadController {
         
         do {
             try await download.save(on: req.db)
-            return Response(status: .created)
+            return .created
         } catch let error as any DatabaseError where error.isConstraintFailure {
-            return Response(status: .conflict)
+            return .conflict
         } catch {
+            req.logger.error("Failed to track download: \(error)")
             throw error
         }
     }

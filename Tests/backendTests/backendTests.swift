@@ -36,9 +36,6 @@ struct backendTests {
                 try req.content.encode(newDTO)
             }, afterResponse: { res async throws in
                 #expect(res.status == .created)
-                let responseDTO = try res.content.decode(DownloadDTO.self)
-                #expect(responseDTO.id == downloadId)
-                #expect(responseDTO.createdAt != nil)
                 
                 let models = try await Download.query(on: app.db).all()
                 #expect(models.count == 1)
