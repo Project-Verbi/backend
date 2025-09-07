@@ -5,7 +5,6 @@ struct CreateDownload: AsyncMigration {
         try await database.schema("downloads")
             .id()
             .field("created_at", .datetime, .required)
-            .unique(on: "id")
             .create()
     }
 
