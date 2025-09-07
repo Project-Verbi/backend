@@ -13,6 +13,9 @@ public func configure(_ app: Application) async throws {
     let appEnvironment = AppEnvironment(from: app.environment)
     applySQLitePragmas(app, environment: appEnvironment)
 
+    // Setup authentication middleware (must be before routes)
+    setupAuthentication(app, environment: appEnvironment)
+
     // register routes
     try routes(app)
 }
@@ -46,3 +49,15 @@ private func applySQLitePragmas(_ app: Application, environment: AppEnvironment)
     let dbType = environment.usesInMemoryDatabase ? "in-memory" : "file-based"
     app.logger.info("SQLite performance pragmas applied to \(dbType) database (\(environment)): \(pragmas.joined(separator: ", "))")
 }
+
+private func setupAuthentication(_ app: Application, environment: AppEnvironment) {
+    guard let authToken = environment.authToken else {
+        app.logger.warning("AUTH_TOKEN environment variable not set - some routes might be unavailable")
+        return
+    }
+    
+    // Store the auth token in application storage for selective route protection
+    app.storage[AuthTokenKey.self] = authToken
+    app.logger.info("Bearer authentication configured")
+}
+

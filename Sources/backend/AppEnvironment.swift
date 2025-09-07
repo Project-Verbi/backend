@@ -63,4 +63,8 @@ enum AppEnvironment {
         
         return pragmas
     }
+    
+    var authToken: String? {
+        return Environment.get("AUTH_TOKEN")
+    }
 }

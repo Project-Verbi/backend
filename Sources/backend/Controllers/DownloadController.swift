@@ -1,12 +1,7 @@
 import Fluent
 import Vapor
 
-struct DownloadController: RouteCollection {
-    func boot(routes: any RoutesBuilder) throws {
-        let downloads = routes.grouped("downloads")
-
-        downloads.post("track", use: self.track)
-    }
+struct DownloadController {
 
     @Sendable
     func track(req: Request) async throws -> Response {
@@ -26,5 +21,11 @@ struct DownloadController: RouteCollection {
         
         try await download.save(on: req.db)
         return try await download.toDTO().encodeResponse(status: .created, for: req)
+    }
+    
+    @Sendable
+    func getTotalCount(req: Request) async throws -> [String: Int] {
+        let count = try await Download.query(on: req.db).count()
+        return ["count": count]
     }
 }
