@@ -15,7 +15,7 @@ struct DownloadController {
         download.id = id
         
         do {
-            try await download.save(on: req.db)
+            try await download.create(on: req.db)
             return .created
         } catch let error as any DatabaseError where error.isConstraintFailure {
             return .conflict
