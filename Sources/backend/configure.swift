@@ -11,7 +11,7 @@ public func configure(_ app: Application) async throws {
     
     // Apply SQLite performance pragmas after migrations
     let appEnvironment = AppEnvironment(from: app.environment)
-    applySQLitePragmas(app, environment: appEnvironment)
+    await applySQLitePragmas(app, environment: appEnvironment)
 
     // Setup authentication middleware (must be before routes)
     setupAuthentication(app, environment: appEnvironment)
@@ -30,7 +30,7 @@ private func setupDatabase(_ app: Application) {
     app.logger.info("SQLite database configured: \(dbType) (\(appEnvironment))")
 }
 
-private func applySQLitePragmas(_ app: Application, environment: AppEnvironment) {
+private func applySQLitePragmas(_ app: Application, environment: AppEnvironment) async {
     guard let sqliteDB = app.db(.sqlite) as? any SQLiteDatabase else {
         app.logger.warning("Failed to cast database to SQLiteDatabase, pragmas not applied")
         return
@@ -40,7 +40,7 @@ private func applySQLitePragmas(_ app: Application, environment: AppEnvironment)
     
     for pragma in pragmas {
         do {
-            _ = try sqliteDB.sql().raw(SQLQueryString(pragma)).run().wait()
+            try await sqliteDB.sql().raw(SQLQueryString(pragma)).run()
         } catch {
             app.logger.error("Failed to apply SQLite pragma '\(pragma)': \(error)")
         }
